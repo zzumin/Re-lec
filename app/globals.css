@@ -1,0 +1,149 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 5%;
+    --foreground: 240 10% 96%;
+    --card: 240 10% 9%;
+    --card-foreground: 240 10% 96%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 240 10% 96%;
+    --primary: 262 83% 66%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 10%;
+    --secondary-foreground: 240 10% 96%;
+    --muted: 240 10% 13%;
+    --muted-foreground: 240 10% 58%;
+    --accent: 262 83% 66%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 10% 18%;
+    --input: 240 10% 18%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#0a0a0f] text-[#f1f1f8] font-sans antialiased;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+}
+
+/* ── Print / PDF export ─────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    font-size: 13pt;
+    line-height: 1.7;
+  }
+
+  aside { display: none !important; }
+
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-header {
+    display: block !important;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+
+  article {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .prose {
+    --tw-prose-body: #1a1a1a !important;
+    --tw-prose-headings: #111 !important;
+    --tw-prose-strong: #111 !important;
+    --tw-prose-bullets: #555 !important;
+    --tw-prose-counters: #555 !important;
+    --tw-prose-code: #0055aa !important;
+    --tw-prose-links: #3344bb !important;
+    --tw-prose-hr: #ccc !important;
+    --tw-prose-quotes: #444 !important;
+    --tw-prose-quote-borders: #bbb !important;
+  }
+
+  .prose h2 { color: #4a1fa8 !important; font-size: 14pt !important; }
+  .prose h3 { color: #1a6070 !important; font-size: 13pt !important; }
+  .prose code {
+    background: #f0f0f0 !important;
+    border: 1px solid #ddd !important;
+    color: #0055aa !important;
+  }
+
+  /* Mermaid diagrams — keep but on white */
+  .mermaid-wrap {
+    background: #fafafa !important;
+    border: 1px solid #ddd !important;
+  }
+
+  a { color: #3344bb !important; text-decoration: none !important; }
+}
+
+/* print-header hidden on screen */
+.print-header { display: none; }
+
+/* Typography (prose) dark-theme overrides */
+.prose {
+  --tw-prose-body: #c8c8e0;
+  --tw-prose-headings: #eeeef8;
+  --tw-prose-strong: #e8e8f4;
+  --tw-prose-bullets: #7070a0;
+  --tw-prose-counters: #8080a8;
+  --tw-prose-links: #c084fc;
+  --tw-prose-code: #67c4dd;
+  --tw-prose-pre-bg: #0e0e18;
+  --tw-prose-hr: rgba(255,255,255,0.09);
+  --tw-prose-quotes: #9898b8;
+  --tw-prose-quote-borders: rgba(168,130,240,0.35);
+  --tw-prose-captions: #6060888;
+  --tw-prose-th-borders: rgba(255,255,255,0.09);
+  --tw-prose-td-borders: rgba(255,255,255,0.06);
+}
+
+/* h2: 선명한 바이올렛 — 다크/화이트 모두 가독성 확보 */
+.prose h2 {
+  color: #9333ea !important;
+  font-size: 1.2em !important;
+}
+
+/* h3: 선명한 시안 — 다크/화이트 모두 가독성 확보 */
+.prose h3 {
+  color: #0891b2 !important;
+  font-size: 1.05em !important;
+}
+
+.prose code {
+  background: rgba(103, 196, 221, 0.12) !important;
+  border: 1px solid rgba(103, 196, 221, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 0.1em 0.35em !important;
+  font-size: 0.88em !important;
+}
+
+.prose strong {
+  color: #e8e8f8 !important;
+}
