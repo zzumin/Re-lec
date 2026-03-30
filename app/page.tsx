@@ -16,13 +16,31 @@ interface SubjectData {
 export default function Home() {
   const [data, setData] = useState<Record<string, Record<string, SubjectData>>>({});
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<{ semester: string; subject: string } | null>(null);
 
-  useEffect(() => {
-    fetch('/api/subjects')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+  const loadData = () =>
+    fetch('/api/subjects').then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleDelete = async (semester: string, subject: string) => {
+    try {
+      const res = await fetch('/api/subjects', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ semester, subject }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        alert(`삭제 실패: ${err}`);
+        return;
+      }
+      setConfirmDelete(null);
+      loadData();
+    } catch (e) {
+      alert(`네트워크 오류: ${String(e)}`);
+    }
+  };
 
   const totalSubjects = Object.values(data).reduce((a, s) => a + Object.keys(s).length, 0);
   const totalSessions = Object.values(data).reduce((a, s) =>
@@ -85,44 +103,64 @@ export default function Home() {
 
                 {/* Subject rows */}
                 <div className="border border-white/[0.08] rounded-xl overflow-hidden">
-                  {Object.entries(subjects).map(([subject, info], idx, arr) => (
-                    <Link
-                      key={subject}
-                      href={`/subject/${encodeURIComponent(semester)}/${encodeURIComponent(subject)}`}
-                      className={cn(
-                        'flex items-center gap-4 px-5 py-3.5 no-underline transition-colors duration-150',
-                        'hover:bg-white/[0.04] group',
-                        idx !== arr.length - 1 && 'border-b border-white/[0.06]'
-                      )}
-                    >
-                      {/* Subject name */}
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-semibold text-[#f1f1f8] group-hover:text-violet-300 transition-colors">
-                          {subject}
-                        </span>
-                      </div>
-
-                      {/* Professor */}
-                      <div className="text-xs text-[#5a5a78] w-32 truncate hidden sm:block">
-                        {info.professor}
-                      </div>
-
-                      {/* Session count */}
-                      <div className="text-xs text-[#9494b0] w-20 text-right hidden sm:block">
-                        {info.sessions.length}회 수업
-                      </div>
-
-                      {/* Style badge */}
-                      <div className="w-24 flex justify-end">
-                        {info.styleNotes.length > 0 && (
-                          <Badge variant="purple" className="text-[10px]">스타일</Badge>
+                  {Object.entries(subjects).map(([subject, info], idx, arr) => {
+                    const isConfirming = confirmDelete?.semester === semester && confirmDelete?.subject === subject;
+                    return (
+                      <div
+                        key={subject}
+                        className={cn(
+                          'flex items-center group transition-colors duration-150',
+                          idx !== arr.length - 1 && 'border-b border-white/[0.06]'
                         )}
-                      </div>
+                      >
+                        <Link
+                          href={`/subject/${encodeURIComponent(semester)}/${encodeURIComponent(subject)}`}
+                          className="flex-1 flex items-center gap-4 px-5 py-3.5 no-underline hover:bg-white/[0.04] transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-[#f1f1f8] group-hover:text-violet-300 transition-colors">
+                              {subject}
+                            </span>
+                          </div>
+                          <div className="text-xs text-[#5a5a78] w-32 truncate hidden sm:block">{info.professor}</div>
+                          <div className="text-xs text-[#9494b0] w-20 text-right hidden sm:block">{info.sessions.length}회 수업</div>
+                          <div className="w-20 flex justify-end">
+                            {info.styleNotes.length > 0 && <Badge variant="purple" className="text-[10px]">스타일</Badge>}
+                          </div>
+                          <span className="text-[#5a5a78] group-hover:text-violet-400 transition-colors text-sm">›</span>
+                        </Link>
 
-                      {/* Arrow */}
-                      <span className="text-[#5a5a78] group-hover:text-violet-400 transition-colors text-sm">›</span>
-                    </Link>
-                  ))}
+                        {/* 삭제 버튼 */}
+                        <div className="pr-3 pl-1">
+                          {isConfirming ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleDelete(semester, subject)}
+                                className="text-[11px] px-2 py-1 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all"
+                              >
+                                삭제
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="text-[11px] px-2 py-1 rounded-lg bg-white/[0.05] text-[#9494b0] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete({ semester, subject })}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500/15 text-[#3a3a58] hover:text-red-400 transition-colors"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

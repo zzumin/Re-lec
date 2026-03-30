@@ -143,6 +143,55 @@ export function saveSessionTitle(
  * 현재 날짜 이전의 수업 결과를 시간순으로 반환합니다.
  * @param maxSessions 최대 가져올 수업 수 (기본 4개)
  */
+export interface Highlight {
+  id: string;
+  text: string;
+  color: 'yellow' | 'green' | 'blue' | 'pink';
+  createdAt: string;
+}
+
+export function getHighlights(semester: string, subject: string, date: string): Highlight[] {
+  const file = path.join(getSessionDir(semester, subject, date), 'highlights.json');
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file, 'utf-8'));
+}
+
+export function saveHighlights(semester: string, subject: string, date: string, highlights: Highlight[]): void {
+  const file = path.join(getSessionDir(semester, subject, date), 'highlights.json');
+  fs.writeFileSync(file, JSON.stringify(highlights, null, 2), 'utf-8');
+}
+
+export function saveResult(semester: string, subject: string, date: string, result: string): void {
+  const resultFile = path.join(getSessionDir(semester, subject, date), 'result.md');
+  fs.writeFileSync(resultFile, result, 'utf-8');
+}
+
+export function deleteSubject(semester: string, subject: string): void {
+  const dir = getSubjectDir(semester, subject);
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  // 학기 디렉토리가 비면 학기도 삭제
+  const semesterDir = path.join(DATA_DIR, semester);
+  if (fs.existsSync(semesterDir) && fs.readdirSync(semesterDir).length === 0) {
+    fs.rmdirSync(semesterDir);
+  }
+}
+
+export function deleteSession(semester: string, subject: string, date: string): void {
+  const dir = getSessionDir(semester, subject, date);
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  // subject.json에서 session 날짜 제거
+  const subjectFile = path.join(getSubjectDir(semester, subject), 'subject.json');
+  if (fs.existsSync(subjectFile)) {
+    const data: SubjectData = JSON.parse(fs.readFileSync(subjectFile, 'utf-8'));
+    data.sessions = data.sessions.filter(d => d !== date);
+    fs.writeFileSync(subjectFile, JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
+
 export function getPreviousSessions(
   semester: string,
   subject: string,

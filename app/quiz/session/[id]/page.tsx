@@ -7,13 +7,20 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import type { QuizSet, QuizQuestion, QuestionType } from '@/lib/quiz';
+import type { QuizSet, QuizQuestion, QuestionType, Difficulty } from '@/lib/quiz';
 
 const TYPE_COLORS: Record<QuestionType, string> = {
   '단답형': 'cyan',
   'OX': 'purple',
   '빈칸채우기': 'amber',
   '서술형': 'green',
+};
+
+const DIFF_STYLES: Record<Difficulty, { label: string; cls: string }> = {
+  '하':   { label: '하', cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+  '중':   { label: '중', cls: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' },
+  '상':   { label: '상', cls: 'text-violet-400 bg-violet-500/10 border-violet-500/30' },
+  '지엽': { label: '지엽', cls: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
 };
 
 type Phase = 'idle' | 'revealed';
@@ -29,13 +36,14 @@ function shuffle<T>(arr: T[]): T[] {
 
 export default function QuizSessionPage() {
   const params = useParams();
-  const quizId = decodeURIComponent(params.id as string);
+  const quizId = params.id as string;
 
   const [quizSet, setQuizSet] = useState<QuizSet | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
   const [selectedOx, setSelectedOx] = useState<'O' | 'X' | null>(null);
+  const [userAnswer, setUserAnswer] = useState('');
   const [grades, setGrades] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +74,7 @@ export default function QuizSessionPage() {
     setCurrentIndex(i => i + 1);
     setPhase('idle');
     setSelectedOx(null);
+    setUserAnswer('');
   };
 
   const handleOxSelect = async (choice: 'O' | 'X') => {
@@ -167,8 +176,13 @@ export default function QuizSessionPage() {
       <div className="w-full max-w-2xl">
         <Card className="mb-4">
           <CardContent className="p-8">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <Badge variant={typeColor as Parameters<typeof Badge>[0]['variant']}>{q.type}</Badge>
+              {q.difficulty && (
+                <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full border', DIFF_STYLES[q.difficulty]?.cls)}>
+                  {DIFF_STYLES[q.difficulty]?.label}
+                </span>
+              )}
             </div>
             <p className="text-[17px] text-[#f1f1f8] leading-relaxed font-medium">{q.question}</p>
             {q.hint && q.type === '빈칸채우기' && (
@@ -233,16 +247,44 @@ export default function QuizSessionPage() {
           /* Short / Fill / Essay */
           <div className="space-y-3">
             {phase === 'idle' ? (
-              <Button
-                className="w-full"
-                variant="secondary"
-                size="lg"
-                onClick={() => setPhase('revealed')}
-              >
-                정답 확인
-              </Button>
+              <>
+                {q.type === '서술형' ? (
+                  <textarea
+                    value={userAnswer}
+                    onChange={e => setUserAnswer(e.target.value)}
+                    placeholder="답을 작성해보세요..."
+                    rows={4}
+                    className="w-full rounded-xl bg-[#111118] border border-white/[0.08] px-4 py-3 text-sm text-[#f1f1f8] placeholder-[#5a5a78] resize-none focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={userAnswer}
+                    onChange={e => setUserAnswer(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && setPhase('revealed')}
+                    placeholder={q.type === '빈칸채우기' ? '빈칸에 들어갈 답을 입력하세요' : '답을 입력하세요'}
+                    className="w-full rounded-xl bg-[#111118] border border-white/[0.08] px-4 py-3 text-sm text-[#f1f1f8] placeholder-[#5a5a78] focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  />
+                )}
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setPhase('revealed')}
+                >
+                  정답 확인
+                </Button>
+              </>
             ) : (
               <>
+                {userAnswer.trim() && (
+                  <Card className="border-white/[0.08] bg-white/[0.03]">
+                    <CardContent className="p-4">
+                      <div className="text-xs font-semibold text-[#5a5a78] mb-1.5">내 답</div>
+                      <p className="text-[14px] text-[#c8c8e0] leading-relaxed whitespace-pre-wrap">{userAnswer}</p>
+                    </CardContent>
+                  </Card>
+                )}
                 <Card className="border-emerald-500/30 bg-emerald-500/10">
                   <CardContent className="p-5">
                     <div className="text-xs font-semibold text-emerald-400 mb-1.5">정답</div>

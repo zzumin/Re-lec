@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResult } from '@/lib/storage';
 import { generateQuiz } from '@/lib/gemini';
-import { saveQuizSet, initialSM2, type QuizSet, type QuizQuestion, type QuestionType } from '@/lib/quiz';
+import { saveQuizSet, initialSM2, type QuizSet, type QuizQuestion, type QuestionType, type Difficulty } from '@/lib/quiz';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { semester, subject, sessions, counts } = body as {
+    const { semester, subject, sessions, counts, difficulties } = body as {
       semester: string;
       subject: string;
       sessions: string[];
       counts: Partial<Record<QuestionType, number>>;
+      difficulties: Difficulty[];
     };
 
     if (!semester || !subject || !sessions?.length) {
@@ -33,8 +34,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '선택한 수업의 강의 해설을 찾을 수 없습니다.' }, { status: 400 });
     }
 
+    const selectedDifficulties: Difficulty[] = difficulties?.length ? difficulties : ['하', '중', '상'];
+
     // Gemini로 문제 생성
-    const rawQuestions = await generateQuiz(lectureContents, counts);
+    const rawQuestions = await generateQuiz(lectureContents, counts, selectedDifficulties);
 
     if (!rawQuestions.length) {
       return NextResponse.json({ error: '문제 생성에 실패했습니다. 다시 시도해주세요.' }, { status: 500 });
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       sm2: initialSM2(),
     }));
 
-    const id = `${Date.now()}-${encodeURIComponent(semester)}-${encodeURIComponent(subject)}`;
+    const id = crypto.randomUUID();
     const sessionLabels = sessions.join(', ');
 
     const quizSet: QuizSet = {

@@ -44,6 +44,14 @@
 @media print {
   .no-print { display: none !important; }
 
+  /* 페이지 중간에서 잘리지 않도록 */
+  p, li, h2, h3, h4, blockquote, pre, table, tr, .callout {
+    page-break-inside: avoid;
+  }
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
   body {
     background: #fff !important;
     color: #1a1a1a !important;
@@ -101,6 +109,9 @@
   }
 
   a { color: #3344bb !important; text-decoration: none !important; }
+
+  /* 사이드바·버튼 등 UI 요소 숨김 */
+  nav, header, footer, .no-print { display: none !important; }
 }
 
 /* print-header hidden on screen */
@@ -146,4 +157,78 @@
 
 .prose strong {
   color: #e8e8f8 !important;
+}
+
+/* ── Callout blocks ─────────────────────────────────────── */
+.callout {
+  margin: 1.5em 0;
+  padding: 0.9em 1.1em 0.9em 1.3em;
+  border-radius: 6px;
+  border-left: 3px solid;
+  font-size: 0.95em;
+  line-height: 1.65;
+  position: relative;
+}
+
+.callout::before {
+  display: block;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.45em;
+  opacity: 0.85;
+}
+
+/* 시험 출제 가능 — amber */
+.callout.exam {
+  background: rgba(251, 191, 36, 0.07);
+  border-color: #f59e0b;
+  color: #f5e9c8;
+}
+.callout.exam::before {
+  content: '📝  시험 출제 가능';
+  color: #f59e0b;
+}
+
+/* 핵심 개념 — violet */
+.callout.key {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: #8b5cf6;
+  color: #e2d9f8;
+}
+.callout.key::before {
+  content: '⭐  핵심 개념';
+  color: #a78bfa;
+}
+
+/* 이해 필요 — rose */
+.callout.hard {
+  background: rgba(244, 63, 94, 0.07);
+  border-color: #f43f5e;
+  color: #f8d8dd;
+}
+.callout.hard::before {
+  content: '⚡  이해 필요';
+  color: #fb7185;
+}
+
+/* ── Highlights ─────────────────────────────────────────── */
+mark.hl-yellow { background: rgba(251, 191, 36, 0.30); color: inherit; border-radius: 2px; padding: 0 2px; cursor: pointer; }
+mark.hl-green  { background: rgba(52, 211, 153, 0.28); color: inherit; border-radius: 2px; padding: 0 2px; cursor: pointer; }
+mark.hl-blue   { background: rgba(96, 165, 250, 0.28); color: inherit; border-radius: 2px; padding: 0 2px; cursor: pointer; }
+mark.hl-pink   { background: rgba(244, 114, 182, 0.30); color: inherit; border-radius: 2px; padding: 0 2px; cursor: pointer; }
+
+@media print {
+  .callout {
+    background: transparent !important;
+    border-radius: 0 !important;
+    color: #1a1a1a !important;
+  }
+  .callout.exam { border-color: #b45309 !important; }
+  .callout.exam::before { color: #b45309 !important; }
+  .callout.key  { border-color: #6d28d9 !important; }
+  .callout.key::before  { color: #6d28d9 !important; }
+  .callout.hard { border-color: #be123c !important; }
+  .callout.hard::before { color: #be123c !important; }
 }

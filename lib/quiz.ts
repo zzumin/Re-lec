@@ -5,6 +5,7 @@ import { ensureDir } from './storage';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type QuestionType = '단답형' | 'OX' | '빈칸채우기' | '서술형';
+export type Difficulty = '하' | '중' | '상' | '지엽';
 
 export interface SM2State {
   interval: number;    // days until next review
@@ -16,6 +17,7 @@ export interface SM2State {
 export interface QuizQuestion {
   id: string;
   type: QuestionType;
+  difficulty: Difficulty;
   question: string;
   answer: string;
   hint?: string;        // 빈칸채우기: fill context; others: optional hint

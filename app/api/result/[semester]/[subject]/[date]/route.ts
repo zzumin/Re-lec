@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getResult, getSubjectInfo } from '@/lib/storage';
+import { getResult, getSubjectInfo, saveResult } from '@/lib/storage';
 
 export async function GET(
   request: NextRequest,
@@ -20,6 +20,28 @@ export async function GET(
       decodeURIComponent(subject)
     );
     return NextResponse.json({ result, styleInfo });
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ semester: string; subject: string; date: string }> }
+) {
+  try {
+    const { semester, subject, date } = await params;
+    const { result } = await request.json();
+    if (typeof result !== 'string') {
+      return NextResponse.json({ error: '잘못된 요청' }, { status: 400 });
+    }
+    saveResult(
+      decodeURIComponent(semester),
+      decodeURIComponent(subject),
+      decodeURIComponent(date),
+      result
+    );
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

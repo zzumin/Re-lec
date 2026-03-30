@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import type { QuizSet, QuestionType } from '@/lib/quiz';
+import type { QuizSet, QuestionType, Difficulty } from '@/lib/quiz';
 
 interface SubjectData {
   professor: string;
@@ -44,6 +44,22 @@ export default function QuizPage() {
   const [enabledTypes, setEnabledTypes] = useState<Record<QuestionType, boolean>>({
     '단답형': true, 'OX': true, '빈칸채우기': true, '서술형': true,
   });
+  const [selectedDifficulties, setSelectedDifficulties] = useState<Difficulty[]>(['하', '중', '상']);
+
+  const DIFFICULTIES: { d: Difficulty; label: string; desc: string; color: string }[] = [
+    { d: '하', label: '하', desc: '기본 용어·정의', color: 'emerald' },
+    { d: '중', label: '중', desc: '개념 이해·흐름', color: 'cyan' },
+    { d: '상', label: '상', desc: '연결·적용·분석', color: 'violet' },
+    { d: '지엽', label: '지엽', desc: '세부 수치·예외', color: 'amber' },
+  ];
+
+  const toggleDifficulty = (d: Difficulty) => {
+    setSelectedDifficulties(prev =>
+      prev.includes(d)
+        ? prev.length > 1 ? prev.filter(x => x !== d) : prev  // 최소 1개
+        : [...prev, d]
+    );
+  };
 
   useEffect(() => {
     fetch('/api/quiz/list').then(r => r.json()).then(setQuizSets).catch(() => {});
@@ -94,7 +110,7 @@ export default function QuizPage() {
       const res = await fetch('/api/quiz/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ semester: selectedSemester, subject: selectedSubject, sessions: selectedSessions, counts }),
+        body: JSON.stringify({ semester: selectedSemester, subject: selectedSubject, sessions: selectedSessions, counts, difficulties: selectedDifficulties }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -246,6 +262,33 @@ export default function QuizPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Difficulty selector */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold text-[#9494b0] mb-3">난이도 선택</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {DIFFICULTIES.map(({ d, label, desc, color }) => {
+                    const on = selectedDifficulties.includes(d);
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => toggleDifficulty(d)}
+                        className={cn(
+                          'flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-center transition-all',
+                          on
+                            ? `bg-${color}-500/10 border-${color}-500/40 text-${color}-300`
+                            : 'bg-[#111118] border-white/[0.08] text-[#5a5a78] hover:border-white/20'
+                        )}
+                      >
+                        <span className="text-base font-bold">{label}</span>
+                        <span className="text-[10px] leading-tight opacity-70">{desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-[#5a5a78] mt-2">선택한 난이도로 문제를 균등 배분합니다</p>
               </div>
 
               {genError && (
