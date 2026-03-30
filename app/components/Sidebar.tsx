@@ -9,7 +9,6 @@ const navItems = [
   { href: '/upload', label: '새 수업 업로드' },
   { href: '/quiz', label: '퀴즈' },
   { href: '/quiz/review', label: '오늘 복습' },
-  { href: '/settings', label: '설정 / 과목 관리' },
 ];
 
 export default function Sidebar() {

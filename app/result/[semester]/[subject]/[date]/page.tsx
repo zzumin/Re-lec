@@ -9,6 +9,7 @@ import { Button } from '../../../../components/ui/button';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import MermaidChart from '../../../../components/MermaidChart';
 
 interface ResultData {
@@ -49,14 +50,20 @@ const HL_COLORS: { key: Highlight['color']; bg: string; label: string }[] = [
 
 function applyHighlights(markdown: string, highlights: Highlight[]): string {
   if (!highlights.length) return markdown;
-  // 긴 텍스트부터 처리해 중첩 방지
   const sorted = [...highlights].sort((a, b) => b.text.length - a.text.length);
   let result = markdown;
   for (const hl of sorted) {
     const escaped = hl.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const open = `<mark class="hl-${hl.color}" data-hl-id="${hl.id}">`;
+    const close = '</mark>';
+    // **텍스트** 형태(볼드) 안의 텍스트도 매칭
     result = result.replace(
-      new RegExp(escaped, 'g'),
-      `<mark class="hl-${hl.color}" data-hl-id="${hl.id}">${hl.text}</mark>`
+      new RegExp(`(\\*\\*)?(${escaped})(\\*\\*)?`, 'g'),
+      (match, starOpen, text, starClose) => {
+        if (starOpen && starClose) return `${starOpen}${open}${text}${close}${starClose}`;
+        if (!starOpen && !starClose) return `${open}${text}${close}`;
+        return match; // ** 짝이 안 맞으면 그대로
+      }
     );
   }
   return result;
@@ -377,6 +384,7 @@ export default function ResultPage() {
           ) : (
             <article ref={articleRef} className="prose prose-invert max-w-none bg-[#111118] border border-white/[0.08] rounded-2xl px-10 py-10 text-[15px]">
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}
                 components={{
                   code({ className, children }) {
@@ -467,7 +475,7 @@ export default function ResultPage() {
                     </div>
                   ) : (
                     <div className="text-[13px] text-[#c4c4e0] leading-relaxed prose prose-invert prose-sm max-w-none">
-                      <ReactMarkdown>{askModal.answer}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{askModal.answer}</ReactMarkdown>
                     </div>
                   )}
                 </div>

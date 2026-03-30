@@ -137,13 +137,13 @@
 
 /* h2: 선명한 바이올렛 — 다크/화이트 모두 가독성 확보 */
 .prose h2 {
-  color: #9333ea !important;
+  color: #b06ef3 !important;
   font-size: 1.2em !important;
 }
 
 /* h3: 선명한 시안 — 다크/화이트 모두 가독성 확보 */
 .prose h3 {
-  color: #0891b2 !important;
+  color: #22d3ee !important;
   font-size: 1.05em !important;
 }
 
