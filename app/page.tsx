@@ -30,8 +30,24 @@ export default function Home() {
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const loadData = () =>
-    fetch('/api/subjects').then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  const loadData = async () => {
+    const [subjects, presets] = await Promise.all([
+      fetch('/api/subjects').then(r => r.json()).catch(() => ({})),
+      fetch('/api/presets').then(r => r.json()).then(d => d.presets || {}).catch(() => ({})),
+    ]);
+    // 프리셋 과목 중 subjects에 없는 것은 sessions:[] 로 병합
+    const merged: Record<string, Record<string, SubjectData>> = { ...subjects };
+    for (const [sem, subs] of Object.entries(presets as Record<string, Record<string, SubjectPreset>>)) {
+      if (!merged[sem]) merged[sem] = {};
+      for (const [subj, info] of Object.entries(subs)) {
+        if (!merged[sem][subj]) {
+          merged[sem][subj] = { professor: info.professor, styleNotes: [], sessions: [], updatedAt: '' };
+        }
+      }
+    }
+    setData(merged);
+    setLoading(false);
+  };
 
   useEffect(() => { loadData(); }, []);
 

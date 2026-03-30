@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 
@@ -166,22 +167,30 @@ export function saveResult(semester: string, subject: string, date: string, resu
   fs.writeFileSync(resultFile, result, 'utf-8');
 }
 
+function rmrf(dir: string): void {
+  execSync(`rm -rf "${dir.replace(/\\/g, '/')}"`, { shell: 'bash' });
+}
+
 export function deleteSubject(semester: string, subject: string): void {
   const dir = getSubjectDir(semester, subject);
   if (fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true, force: true });
+    rmrf(dir);
   }
   // 학기 디렉토리가 비면 학기도 삭제
-  const semesterDir = path.join(DATA_DIR, semester);
-  if (fs.existsSync(semesterDir) && fs.readdirSync(semesterDir).length === 0) {
-    fs.rmdirSync(semesterDir);
+  try {
+    const semesterDir = path.join(DATA_DIR, semester);
+    if (fs.existsSync(semesterDir) && fs.readdirSync(semesterDir).length === 0) {
+      rmrf(semesterDir);
+    }
+  } catch {
+    // 학기 디렉토리 삭제 실패는 무시
   }
 }
 
 export function deleteSession(semester: string, subject: string, date: string): void {
   const dir = getSessionDir(semester, subject, date);
   if (fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true, force: true });
+    rmrf(dir);
   }
   // subject.json에서 session 날짜 제거
   const subjectFile = path.join(getSubjectDir(semester, subject), 'subject.json');
