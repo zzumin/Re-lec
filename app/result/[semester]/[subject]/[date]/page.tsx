@@ -324,7 +324,12 @@ export default function ResultPage() {
             ) : null}
             {!editMode ? (
               <>
-                <Button variant="secondary" size="sm" onClick={() => { setEditContent(data?.result ?? ''); setEditMode(true); }}>
+                <Button variant="secondary" size="sm" onClick={() => {
+                  // <mark> 태그 제거한 순수 마크다운으로 편집 시작
+                  const clean = (data?.result ?? '').replace(/<mark[^>]*>([\s\S]*?)<\/mark>/g, '$1');
+                  setEditContent(clean);
+                  setEditMode(true);
+                }}>
                   편집
                 </Button>
                 <Button variant="secondary" size="sm" onClick={handleCopy}>
@@ -467,16 +472,33 @@ export default function ResultPage() {
               </div>
 
               {(askModal.loading || askModal.answer) && (
-                <div className="border-t border-white/[0.06] pt-4">
+                <div className="border-t border-white/[0.06] pt-4 max-h-64 overflow-y-auto">
                   {askModal.loading ? (
                     <div className="flex items-center gap-2 text-[#5a5a78] text-[13px]">
                       <div className="w-3.5 h-3.5 rounded-full border-2 border-violet-500/30 border-t-violet-500 animate-spin" />
                       답변 생성 중...
                     </div>
                   ) : (
-                    <div className="text-[13px] text-[#c4c4e0] leading-relaxed prose prose-invert prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{askModal.answer}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="text-[13px] text-[#c4c4e0] leading-relaxed prose prose-invert prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{askModal.answer}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const addition = `\n\n---\n\n> **💬 질문:** ${askModal.question}\n>\n> ${askModal.answer.split('\n').join('\n> ')}\n`;
+                          const newResult = (data?.result ?? '') + addition;
+                          setData(prev => prev ? { ...prev, result: newResult } : prev);
+                          await fetch(
+                            `/api/result/${encodeURIComponent(semester)}/${encodeURIComponent(subject)}/${encodeURIComponent(date)}`,
+                            { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result: newResult }) }
+                          );
+                          setAskModal(null);
+                        }}
+                        className="mt-3 w-full text-[12px] py-2 rounded-xl bg-violet-500/15 text-violet-300 hover:bg-violet-500/25 transition-colors border border-violet-500/25"
+                      >
+                        ＋ 이 답변을 노트에 추가
+                      </button>
+                    </>
                   )}
                 </div>
               )}

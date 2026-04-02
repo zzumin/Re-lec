@@ -20,8 +20,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
     }
 
-    // Auto-generate date from server time (YYYY-MM-DD)
-    const date = new Date().toISOString().split('T')[0];
+    // Auto-generate date from server time (YYYY-MM-DD), suffix if already exists
+    const baseDate = new Date().toISOString().split('T')[0];
+    let date = baseDate;
+    let suffix = 2;
+    while (fs.existsSync(path.join(process.cwd(), 'data', semester, subject, date))) {
+      date = `${baseDate}-${suffix++}`;
+    }
 
     // Look up professor from presets config, fallback to subject.json
     let professor = '';

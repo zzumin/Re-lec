@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import { Card, CardContent } from '../components/ui/card';
@@ -33,6 +33,8 @@ export default function QuizPage() {
   const [creating, setCreating] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
+  const [progress, setProgress] = useState(0);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Form state
   const [selectedSemester, setSelectedSemester] = useState('');
@@ -106,6 +108,17 @@ export default function QuizPage() {
 
     setGenerating(true);
     setGenError('');
+    setProgress(0);
+
+    // 90초 기준으로 서서히 채움 (최대 92%까지)
+    progressRef.current = setInterval(() => {
+      setProgress(p => {
+        if (p >= 92) { clearInterval(progressRef.current!); return p; }
+        const remaining = 92 - p;
+        return p + remaining * 0.03;
+      });
+    }, 800);
+
     try {
       const res = await fetch('/api/quiz/generate', {
         method: 'POST',
@@ -114,8 +127,12 @@ export default function QuizPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      router.push(`/quiz/session/${encodeURIComponent(data.id)}`);
+      clearInterval(progressRef.current!);
+      setProgress(100);
+      setTimeout(() => router.push(`/quiz/session/${encodeURIComponent(data.id)}`), 300);
     } catch (err: unknown) {
+      clearInterval(progressRef.current!);
+      setProgress(0);
       setGenError(err instanceof Error ? err.message : String(err));
       setGenerating(false);
     }
@@ -298,9 +315,18 @@ export default function QuizPage() {
               )}
 
               {generating && (
-                <div className="mb-4 flex items-center gap-3 px-4 py-3.5 bg-violet-500/10 border border-violet-500/25 rounded-xl text-sm text-violet-400">
-                  <div className="w-4 h-4 rounded-full border-2 border-violet-500/30 border-t-violet-500 animate-spin flex-shrink-0" />
-                  Gemini 2.5 Pro가 문제를 출제 중입니다... (1~2분 소요)
+                <div className="mb-4 px-4 py-4 bg-violet-500/10 border border-violet-500/25 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-violet-400">Gemini 2.5 Pro가 문제를 출제 중...</span>
+                    <span className="text-sm font-bold text-violet-300">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-700"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#5a5a78] mt-2">완료까지 1~2분 소요됩니다</p>
                 </div>
               )}
 
